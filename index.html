@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #1a1a1a;
+      font-family: monospace;
+      color: #fff;
+    }
+    #controls {
+      margin-bottom: 20px;
+      padding: 20px;
+      background: #2a2a2a;
+      border-radius: 8px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      max-width: 1875px;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    label {
+      font-size: 12px;
+      color: #aaa;
+    }
+    button {
+      background: #4a4a4a;
+      border: none;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: monospace;
+    }
+    button:hover {
+      background: #5a5a5a;
+    }
+    button.save {
+      background: #2a5a2a;
+    }
+    button.save:hover {
+      background: #3a6a3a;
+    }
+    button.load {
+      background: #2a4a5a;
+    }
+    button.load:hover {
+      background: #3a5a6a;
+    }
+    button.delete {
+      background: #5a2a2a;
+    }
+    button.delete:hover {
+      background: #6a3a3a;
+    }
+    select, input {
+      background: #3a3a3a;
+      border: 1px solid #4a4a4a;
+      color: #fff;
+      padding: 8px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    .preset-section {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      padding-top: 10px;
+      border-top: 1px solid #4a4a4a;
+      margin-top: 10px;
+    }
+    #presetName {
+      min-width: 300px;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <div class="control-group">
+      <label>Mode</label>
+      <select id="renderMode">
+        <option value="lines">Lines</option>
+        <option value="triangles">Triangles</option>
+        <option value="dots">Dots</option>
+        <option value="voronoi">Voronoi Cells</option>
+        <option value="network">Web/Network</option>
+        <option value="delaunay">Delaunay Triangulation</option>
+        <option value="tsp">Traveling Salesman</option>
+        <option value="fibarms">Fibonacci Arms</option>
+        <option value="flow">Flow Field</option>
+        <option value="curvedtsp">Curved TSP</option>
+        <option value="hilbert">Hilbert Fill</option>
+        <option value="contour">Contour Lines</option>
+        <option value="hachures">Hachures</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Count</label>
+      <input type="number" id="count" value="2000" min="100" max="10000" step="100">
+    </div>
+    <div class="control-group">
+      <label>Spacing</label>
+      <input type="number" id="spacing" value="5" min="1" max="50" step="0.5">
+    </div>
+    <div class="control-group">
+      <label>Size</label>
+      <input type="number" id="elementSize" value="100" min="10" max="300" step="10">
+    </div>
+    <div class="control-group">
+      <label>Line Weight</label>
+      <input type="number" id="lineWeight" value="0.5" min="0.1" max="5" step="0.1">
+    </div>
+    <div class="control-group">
+      <label>Triangle Spread</label>
+      <input type="number" id="triangleSpread" value="50" min="10" max="120" step="5">
+    </div>
+    <div class="control-group">
+      <label>Triangle Variation</label>
+      <input type="number" id="triangleVariation" value="50" min="0" max="100" step="5">
+    </div>
+    <div class="control-group">
+      <label>Network Connections</label>
+      <input type="number" id="networkConnections" value="3" min="1" max="8" step="1">
+    </div>
+    <div class="control-group">
+      <label>TSP Method</label>
+      <select id="tspMethod">
+        <option value="spiral">Spiral Order</option>
+        <option value="nearest">Nearest Neighbor</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Dot Size Multiplier</label>
+      <input type="number" id="dotSizeMultiplier" value="1" min="0.5" max="5" step="0.5">
+    </div>
+    <div class="control-group">
+      <label>Wave Modulation</label>
+      <input type="number" id="waveModulation" value="0" min="0" max="100" step="5">
+    </div>
+    <div class="control-group">
+      <label>Fib Arm Step</label>
+      <input type="number" id="fibStep" value="13" min="2" max="34" step="1">
+    </div>
+    <div class="control-group">
+      <label>Flow Steps</label>
+      <input type="number" id="flowSteps" value="20" min="5" max="50" step="5">
+    </div>
+    <div class="control-group">
+      <label>Flow Scale</label>
+      <input type="number" id="flowScale" value="200" min="50" max="500" step="50">
+    </div>
+    <div class="control-group">
+      <label>Background</label>
+      <select id="bgColor">
+        <option value="#C84B31">Red</option>
+        <option value="#000000">Black</option>
+        <option value="#FFFFFF">White</option>
+        <option value="#2C3E50">Dark Blue</option>
+      </select>
+    </div>
+    <button id="regenBtn">Regenerate (Randomize)</button>
+    <button id="exportSVGBtn">Export SVG</button>
+    <button id="exportPNGBtn">Export PNG</button>
+    
+    <div class="preset-section">
+      <div class="control-group">
+        <label>Preset Name (auto-generated)</label>
+        <input type="text" id="presetName" readonly>
+      </div>
+      <button id="savePresetBtn" class="save">Save Preset</button>
+      <div class="control-group">
+        <label>Load Preset</label>
+        <select id="presetSelect">
+          <option value="">-- Select Preset --</option>
+        </select>
+      </div>
+      <button id="loadPresetBtn" class="load">Load</button>
+      <button id="deletePresetBtn" class="delete">Delete</button>
+    </div>
+  </div>
+  
+  <script>
+    let goldenAngle;
+    let elements = [];
+    let canvasReady = false;
+    
+    function setup() {
+      createCanvas(1875, 1875);
+      goldenAngle = PI * (3 - Math.sqrt(5));
+      canvasReady = true;
+      
+      generateElements();
+      drawPattern();
+      updatePresetName();
+      
+      setupEventListeners();
+      refreshPresetList();
+    }
+    
+    function setupEventListeners() {
+      document.getElementById('renderMode').addEventListener('change', () => { handleUpdate(); updatePresetName(); });
+      document.getElementById('count').addEventListener('change', () => { handleUpdate(); updatePresetName(); });
+      document.getElementById('spacing').addEventListener('change', () => { handleUpdate(); updatePresetName(); });
+      document.getElementById('elementSize').addEventListener('change', () => { handleUpdate(); updatePresetName(); });
+      document.getElementById('lineWeight').addEventListener('change', () => { handleUpdate(); updatePresetName(); });
+      document.getElementById('triangleSpread').addEventListener('change', () => { handleUpdate(); updatePresetName(); });
+      document.getElementById('triangleVariation').addEventListener('change', () => { handleUpdate(); updatePresetName(); });
+      document.getElementById('networkConnections').addEventListener('change', () => { handleUpdate(); updatePresetName(); });
+      document.getElementById('tspMethod').addEventListener('change', () => { handleUpdate(); updatePresetName(); });
+      document.getElementById('dotSizeMultiplier').addEventListener('change', () => { handleUpdate(); updatePresetName(); });
+      document.getElementById('waveModulation').addEventListener('change', () => { handleUpdate(); updatePresetName(); });
+      document.getElementById('bgColor').addEventListener('change', () => { handleUpdate(); updatePresetName(); });
+      document.getElementById('fibStep').addEventListener('change', () => { handleUpdate(); updatePresetName(); });
+      document.getElementById('flowSteps').addEventListener('change', () => { handleUpdate(); updatePresetName(); });
+      document.getElementById('flowScale').addEventListener('change', () => { handleUpdate(); updatePresetName(); });
+      document.getElementById('regenBtn').addEventListener('click', handleRandomize);
+      document.getElementById('exportSVGBtn').addEventListener('click', handleExportSVG);
+      document.getElementById('exportPNGBtn').addEventListener('click', handleExportPNG);
+      document.getElementById('savePresetBtn').addEventListener('click', handleSavePreset);
+      document.getElementById('loadPresetBtn').addEventListener('click', handleLoadPreset);
+      document.getElementById('deletePresetBtn').addEventListener('click', handleDeletePreset);
+    }
+    
+    function updatePresetName() {
+      const mode = document.getElementById('renderMode').value;
+      const count = document.getElementById('count').value;
+      const spacing = document.getElementById('spacing').value;
+      const size = document.getElementById('elementSize').value;
+      const lineWeight = document.getElementById('lineWeight').value;
+      const bgColor = document.getElementById('bgColor').value;
+      
+      const bgNames = {
+        '#C84B31': 'red',
+        '#000000': 'black',
+        '#FFFFFF': 'white',
+        '#2C3E50': 'darkblue'
+      };
+      const bgName = bgNames[bgColor] || 'custom';
+      
+      const presetName = `${mode}_${count}_${spacing}_${size}_${lineWeight}_${bgName}`;
+      document.getElementById('presetName').value = presetName;
+    }
+    
+    function handleRandomize() {
+      let modes = ['lines', 'triangles', 'dots', 'voronoi', 'network', 'delaunay', 'tsp', 'fibarms', 'flow', 'curvedtsp', 'hilbert', 'contour', 'hachures'];
+      let colors = ['#C84B31', '#000000', '#FFFFFF', '#2C3E50'];
+      let tspMethods = ['spiral', 'nearest'];
+      
+      document.getElementById('renderMode').value = random(modes);
+      document.getElementById('count').value = floor(random(10, 50)) * 100;
+      document.getElementById('spacing').value = floor(random(3, 30));
+      document.getElementById('elementSize').value = floor(random(5, 25)) * 10;
+      document.getElementById('lineWeight').value = floor(random(1, 20)) / 10;
+      document.getElementById('triangleSpread').value = floor(random(6, 20)) * 5;
+      document.getElementById('triangleVariation').value = floor(random(0, 20)) * 5;
+      document.getElementById('networkConnections').value = floor(random(1, 8));
+      document.getElementById('tspMethod').value = random(tspMethods);
+      document.getElementById('dotSizeMultiplier').value = floor(random(1, 10)) * 0.5;
+      document.getElementById('waveModulation').value = floor(random(0, 20)) * 5;
+      document.getElementById('bgColor').value = random(colors);
+      document.getElementById('fibStep').value = random([2, 3, 5, 8, 13, 21, 34]);
+      document.getElementById('flowSteps').value = floor(random(1, 10)) * 5;
+      document.getElementById('flowScale').value = floor(random(1, 10)) * 50;
+      
+      updatePresetName();
+      handleUpdate();
+    }
+    
+    function getCurrentSettings() {
+      return {
+        renderMode: document.getElementById('renderMode').value,
+        count: document.getElementById('count').value,
+        spacing: document.getElementById('spacing').value,
+        elementSize: document.getElementById('elementSize').value,
+        lineWeight: document.getElementById('lineWeight').value,
+        triangleSpread: document.getElementById('triangleSpread').value,
+        triangleVariation: document.getElementById('triangleVariation').value,
+        networkConnections: document.getElementById('networkConnections').value,
+        tspMethod: document.getElementById('tspMethod').value,
+        dotSizeMultiplier: document.getElementById('dotSizeMultiplier').value,
+        waveModulation: document.getElementById('waveModulation').value,
+        bgColor: document.getElementById('bgColor').value,
+        fibStep: document.getElementById('fibStep').value,
+        flowSteps: document.getElementById('flowSteps').value,
+        flowScale: document.getElementById('flowScale').value
+      };
+    }
+    
+    function applySettings(settings) {
+      document.getElementById('renderMode').value = settings.renderMode;
+      document.getElementById('count').value = settings.count;
+      document.getElementById('spacing').value = settings.spacing;
+      document.getElementById('elementSize').value = settings.elementSize;
+      document.getElementById('lineWeight').value = settings.lineWeight;
+      document.getElementById('triangleSpread').value = settings.triangleSpread;
+      document.getElementById('triangleVariation').value = settings.triangleVariation || 50;
+      document.getElementById('networkConnections').value = settings.networkConnections || 3;
+      document.getElementById('tspMethod').value = settings.tspMethod || 'spiral';
+      document.getElementById('dotSizeMultiplier').value = settings.dotSizeMultiplier || 1;
+      document.getElementById('waveModulation').value = settings.waveModulation;
+      document.getElementById('bgColor').value = settings.bgColor;
+      document.getElementById('fibStep').value = settings.fibStep || 13;
+      document.getElementById('flowSteps').value = settings.flowSteps || 20;
+      document.getElementById('flowScale').value = settings.flowScale || 200;
+      updatePresetName();
+    }
+    
+    function handleSavePreset() {
+      const presetName = document.getElementById('presetName').value.trim();
+      
+      if (!presetName) {
+        alert('Preset name is empty!');
+        return;
+      }
+      
+      const settings = getCurrentSettings();
+      
+      let presets = JSON.parse(localStorage.getItem('fibonacciPresets') || '{}');
+      
+      if (presets[presetName]) {
+        if (!confirm(`Preset "${presetName}" already exists. Overwrite?`)) {
+          return;
+        }
+      }
+      
+      presets[presetName] = settings;
+      localStorage.setItem('fibonacciPresets', JSON.stringify(presets));
+      
+      refreshPresetList();
+      
+      console.log('Preset saved:', presetName);
+      alert(`Preset "${presetName}" saved successfully!`);
+    }
+    
+    function handleLoadPreset() {
+      const presetName = document.getElementById('presetSelect').value;
+      
+      if (!presetName) {
+        alert('Please select a preset to load!');
+        return;
+      }
+      
+      const presets = JSON.parse(localStorage.getItem('fibonacciPresets') || '{}');
+      
+      if (presets[presetName]) {
+        applySettings(presets[presetName]);
+        handleUpdate();
+        console.log('Preset loaded:', presetName);
+        alert(`Preset "${presetName}" loaded successfully!`);
+      } else {
+        alert('Preset not found!');
+      }
+    }
+    
+    function handleDeletePreset() {
+      const presetName = document.getElementById('presetSelect').value;
+      
+      if (!presetName) {
+        alert('Please select a preset to delete!');
+        return;
+      }
+      
+      if (!confirm(`Are you sure you want to delete preset "${presetName}"?`)) {
+        return;
+      }
+      
+      let presets = JSON.parse(localStorage.getItem('fibonacciPresets') || '{}');
+      delete presets[presetName];
+      localStorage.setItem('fibonacciPresets', JSON.stringify(presets));
+      
+      refreshPresetList();
+      console.log('Preset deleted:', presetName);
+      alert(`Preset "${presetName}" deleted successfully!`);
+    }
+    
+    function refreshPresetList() {
+      const presets = JSON.parse(localStorage.getItem('fibonacciPresets') || '{}');
+      const select = document.getElementById('presetSelect');
+      
+      select.innerHTML = '<option value="">-- Select Preset --</option>';
+      
+      Object.keys(presets).sort().forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        select.appendChild(option);
+      });
+    }
+    
+    function generateElements() {
+      if (!canvasReady) return;
+      
+      elements = [];
+      let count = parseInt(document.getElementById('count').value);
+      let spacing = parseFloat(document.getElementById('spacing').value);
+      let waveModulation = parseFloat(document.getElementById('waveModulation').value) / 100;
+      
+      for (let i = 0; i < count; i++) {
+        let angle = i * goldenAngle;
+        let baseRadius = spacing * Math.sqrt(i);
+        
+        let waveFrequency = 8;
+        let waveAmount = baseRadius * waveModulation * 0.3;
+        let wave = sin(angle * waveFrequency) * waveAmount;
+        let radius = baseRadius + wave;
+        
+        let x = width / 2 + radius * Math.cos(angle);
+        let y = height / 2 + radius * Math.sin(angle);
+        
+        elements.push({
+          x: x,
+          y: y,
+          angle: angle,
+          index: i,
+          radius: radius
+        });
+      }
+    }
+        
+    // Find N nearest neighbors
+    function findNearestNeighbors(elem, n) {
+      let distances = elements.map((other, idx) => {
+        if (other === elem) return { idx: idx, dist: Infinity };
+        let dx = other.x - elem.x;
+        let dy = other.y - elem.y;
+        return { idx: idx, dist: Math.sqrt(dx * dx + dy * dy) };
+      });
+      
+      distances.sort((a, b) => a.dist - b.dist);
+      return distances.slice(0, n);
+    }
+    
+    // Delaunay-style triangulation
+    function computeDelaunayTriangles() {
+      let triangles = [];
+      let edges = new Set();
+      
+      // For each point, connect to nearest neighbors forming triangles
+      for (let i = 0; i < elements.length; i++) {
+        let elem = elements[i];
+        let neighbors = findNearestNeighbors(elem, 6);
+        
+        // Try to form triangles with pairs of neighbors
+        for (let j = 0; j < neighbors.length - 1; j++) {
+          for (let k = j + 1; k < neighbors.length; k++) {
+            if (neighbors[j].dist === Infinity || neighbors[k].dist === Infinity) continue;
+            
+            let idx1 = neighbors[j].idx;
+            let idx2 = neighbors[k].idx;
+            
+            // Check if these three points form a good triangle
+            let p1 = elements[i];
+            let p2 = elements[idx1];
+            let p3 = elements[idx2];
+            
+            let d12 = dist(p1.x, p1.y, p2.x, p2.y);
+            let d23 = dist(p2.x, p2.y, p3.x, p3.y);
+            let d31 = dist(p3.x, p3.y, p1.x, p1.y);
+            
+            // Only create triangle if all sides are reasonably short
+            let maxDist = max(d12, d23, d31);
+            let avgSpacing = (d12 + d23 + d31) / 3;
+            
+            if (maxDist < avgSpacing * 2) {
+              // Add triangle edges
+              let sortedIndices = [i, idx1, idx2].sort((a, b) => a - b);
+              triangles.push(sortedIndices);
+            }
+          }
+        }
+      }
+      
+      // Remove duplicate triangles
+      let uniqueTriangles = [];
+      let seen = new Set();
+      
+      for (let tri of triangles) {
+        let key = tri.join('-');
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueTriangles.push(tri);
+        }
+      }
+      
+      return uniqueTriangles;
+    }
+    
+    // TSP path computation
+    function computeTSPPath(method) {
+      if (method === 'spiral') {
+        // Simply connect in spiral order
+        return elements.map((e, i) => i);
+      } else {
+        // Nearest neighbor greedy algorithm
+        let unvisited = new Set(elements.map((e, i) => i));
+        let path = [0]; // Start from center
+        unvisited.delete(0);
+        
+        while (unvisited.size > 0) {
+          let current = path[path.length - 1];
+          let currentElem = elements[current];
+          
+          let nearest = null;
+          let nearestDist = Infinity;
+          
+          for (let idx of unvisited) {
+            let other = elements[idx];
+            let d = dist(currentElem.x, currentElem.y, other.x, other.y);
+            if (d < nearestDist) {
+              nearestDist = d;
+              nearest = idx;
+            }
+          }
+          
+          if (nearest !== null) {
+            path.push(nearest);
+            unvisited.delete(nearest);
+          }
+        }
+        
+        return path;
+      }
+    }
+    
+    function drawPattern() {
+      if (!canvasReady) return;
+      
+      let bgColor = document.getElementById('bgColor').value;
+      let mode = document.getElementById('renderMode').value;
+      let elementSize = parseInt(document.getElementById('elementSize').value);
+      let lineWeight = parseFloat(document.getElementById('lineWeight').value);
+      let triangleSpread = parseInt(document.getElementById('triangleSpread').value);
+      let triangleVariation = parseFloat(document.getElementById('triangleVariation').value) / 100;
+      let networkConnections = parseInt(document.getElementById('networkConnections').value);
+      let tspMethod = document.getElementById('tspMethod').value;
+      let dotSizeMultiplier = parseFloat(document.getElementById('dotSizeMultiplier').value);
+      
+      background(bgColor);
+      
+      let drawColor = (bgColor === '#000000' || bgColor === '#2C3E50') ? '#FFFFFF' : 
+                      (bgColor === '#FFFFFF') ? '#000000' : '#FFFFFF';
+      
+      stroke(drawColor);
+      strokeWeight(lineWeight);
+      noFill();
+      
+      if (mode === 'delaunay') {
+        let triangles = computeDelaunayTriangles();
+        
+        for (let tri of triangles) {
+          let p1 = elements[tri[0]];
+          let p2 = elements[tri[1]];
+          let p3 = elements[tri[2]];
+          
+          beginShape();
+          vertex(p1.x, p1.y);
+          vertex(p2.x, p2.y);
+          vertex(p3.x, p3.y);
+          vertex(p1.x, p1.y);
+          endShape();
+        }
+      } else if (mode === 'tsp') {
+        let path = computeTSPPath(tspMethod);
+        
+        beginShape();
+        for (let idx of path) {
+          let elem = elements[idx];
+          vertex(elem.x, elem.y);
+        }
+        endShape();
+        
+      } else if (mode === 'lines') {
+        for (let elem of elements) {
+          let lineLength = elementSize * (1 - elem.index / elements.length);
+          let x1 = elem.x;
+          let y1 = elem.y;
+          let x2 = x1 + lineLength * Math.cos(elem.angle);
+          let y2 = y1 + lineLength * Math.sin(elem.angle);
+          
+          line(x1, y1, x2, y2);
+        }
+      } else if (mode === 'voronoi') {
+        let drawnPairs = new Set();
+        
+        for (let i = 0; i < elements.length; i++) {
+          let elem = elements[i];
+          let neighbors = findNearestNeighbors(elem, 6);
+          
+          for (let neighbor of neighbors) {
+            if (neighbor.dist === Infinity) continue;
+            
+            let pairKey = i < neighbor.idx ? `${i}-${neighbor.idx}` : `${neighbor.idx}-${i}`;
+            if (drawnPairs.has(pairKey)) continue;
+            drawnPairs.add(pairKey);
+            
+            let other = elements[neighbor.idx];
+            let midX = (elem.x + other.x) / 2;
+            let midY = (elem.y + other.y) / 2;
+            
+            let dx = other.x - elem.x;
+            let dy = other.y - elem.y;
+            let perpAngle = Math.atan2(dy, dx) + HALF_PI;
+            let segmentLength = neighbor.dist * 0.3;
+            
+            let x1 = midX + segmentLength * Math.cos(perpAngle);
+            let y1 = midY + segmentLength * Math.sin(perpAngle);
+            let x2 = midX - segmentLength * Math.cos(perpAngle);
+            let y2 = midY - segmentLength * Math.sin(perpAngle);
+            
+            line(x1, y1, x2, y2);
+          }
+        }
+      } else if (mode === 'network') {
+        let drawnConnections = new Set();
+        
+        for (let i = 0; i < elements.length; i++) {
+          let elem = elements[i];
+          let neighbors = findNearestNeighbors(elem, networkConnections);
+          
+          for (let neighbor of neighbors) {
+            if (neighbor.dist === Infinity) continue;
+            
+            let pairKey = i < neighbor.idx ? `${i}-${neighbor.idx}` : `${neighbor.idx}-${i}`;
+            if (drawnConnections.has(pairKey)) continue;
+            drawnConnections.add(pairKey);
+            
+            let other = elements[neighbor.idx];
+            line(elem.x, elem.y, other.x, other.y);
+          }
+        }
+      } else if (mode === 'triangles') {
+        let centerX = width / 2;
+        let centerY = height / 2;
+        let maxRadius = min(width, height) / 2;
+        let spreadRad = radians(triangleSpread);
+        
+        for (let elem of elements) {
+          let distFromCenter = dist(elem.x, elem.y, centerX, centerY);
+          let edgeProximity = distFromCenter / maxRadius;
+          
+          let edgeFactor = 1 - pow(edgeProximity, 2);
+          edgeFactor = max(0.3, edgeFactor);
+          
+          let effectiveVariation = triangleVariation * edgeFactor;
+          
+          let distToEdgeX = min(elem.x, width - elem.x);
+          let distToEdgeY = min(elem.y, height - elem.y);
+          let distToEdge = min(distToEdgeX, distToEdgeY);
+          let maxSafeSize = distToEdge * 0.8;
+          
+          let minSize = 0.3 + (effectiveVariation * 0.2);
+          let maxSize = 1.5 + (effectiveVariation * 1.0);
+          let sizeVariation = random(minSize, maxSize);
+          let baseSize = elementSize * (2.0 - elem.index / elements.length) * sizeVariation;
+          
+          baseSize = min(baseSize, maxSafeSize);
+          
+          let x1 = elem.x;
+          let y1 = elem.y;
+          
+          let spreadMultiplier = 1 + (random(-0.8, 2.0) * effectiveVariation);
+          spreadMultiplier = max(0.2, spreadMultiplier);
+          let spreadVariation = spreadRad * spreadMultiplier;
+          
+          let tipAngle = elem.angle + PI;
+          
+          let leftSpreadMult = 1 + (random(-0.5, 0.5) * effectiveVariation);
+          let rightSpreadMult = 1 + (random(-0.5, 0.5) * effectiveVariation);
+          
+          let sideAngle1 = elem.angle + (spreadVariation / 2) * leftSpreadMult;
+          let sideAngle2 = elem.angle - (spreadVariation / 2) * rightSpreadMult;
+          
+          let tipMultiplier = 0.2 + (random(0, 1.8) * effectiveVariation);
+          let tipDist = baseSize * tipMultiplier;
+          
+          let tipAngleOffset = (random(-1, 1) * effectiveVariation * 0.3);
+          let xTip = x1 + tipDist * Math.cos(tipAngle + tipAngleOffset);
+          let yTip = y1 + tipDist * Math.sin(tipAngle + tipAngleOffset);
+          
+          let baseDist1 = baseSize * (0.5 + random(0, 1.5) * effectiveVariation);
+          let baseDist2 = baseSize * (0.5 + random(0, 1.5) * effectiveVariation);
+          
+          let xBase1 = x1 + baseDist1 * Math.cos(sideAngle1);
+          let yBase1 = y1 + baseDist1 * Math.sin(sideAngle1);
+          let xBase2 = x1 + baseDist2 * Math.cos(sideAngle2);
+          let yBase2 = y1 + baseDist2 * Math.sin(sideAngle2);
+          
+          xTip = constrain(xTip, 0, width);
+          yTip = constrain(yTip, 0, height);
+          xBase1 = constrain(xBase1, 0, width);
+          yBase1 = constrain(yBase1, 0, height);
+          xBase2 = constrain(xBase2, 0, width);
+          yBase2 = constrain(yBase2, 0, height);
+          
+          beginShape();
+          vertex(xBase1, yBase1);
+          vertex(xTip, yTip);
+          vertex(xBase2, yBase2);
+          vertex(xBase1, yBase1);
+          endShape();
+          
+          let numInternalLines = effectiveVariation > 0.5 ? floor(random(1, 4)) : 2;
+          for (let j = 1; j <= numInternalLines; j++) {
+            let t = j / (numInternalLines + 1);
+            
+            let xMid1 = lerp(xTip, xBase1, t);
+            let yMid1 = lerp(yTip, yBase1, t);
+            let xMid2 = lerp(xTip, xBase2, t);
+            let yMid2 = lerp(yTip, yBase2, t);
+            
+            line(xMid1, yMid1, xMid2, yMid2);
+          }
+          
+          line(xTip, yTip, xBase1, yBase1);
+          line(xTip, yTip, xBase2, yBase2);
+          line(x1, y1, xTip, yTip);
+        }
+      } else if (mode === 'dots') {
+        fill(drawColor);
+        noStroke();
+
+        for (let elem of elements) {
+          let dotSize = map(elem.index, 0, elements.length, 3, 1) * dotSizeMultiplier;
+          circle(elem.x, elem.y, dotSize);
+        }
+      } else if (mode === 'fibarms') {
+        let step = parseInt(document.getElementById('fibStep').value);
+        for (let i = 0; i + step < elements.length; i++) {
+          let a = elements[i];
+          let b = elements[i + step];
+          line(a.x, a.y, b.x, b.y);
+        }
+      } else if (mode === 'flow') {
+        let flowSteps = parseInt(document.getElementById('flowSteps').value);
+        let flowScale = parseFloat(document.getElementById('flowScale').value);
+        let stepSize = parseFloat(document.getElementById('spacing').value) * 2;
+        for (let elem of elements) {
+          beginShape();
+          let x = elem.x;
+          let y = elem.y;
+          vertex(x, y);
+          for (let s = 0; s < flowSteps; s++) {
+            let angle = noise(x / flowScale, y / flowScale) * TWO_PI * 4;
+            x += cos(angle) * stepSize;
+            y += sin(angle) * stepSize;
+            vertex(x, y);
+          }
+          endShape();
+        }
+      } else if (mode === 'curvedtsp') {
+        let flowScale = parseFloat(document.getElementById('flowScale').value);
+        let path = computeTSPPath(tspMethod);
+        let first = elements[path[0]];
+        beginShape();
+        vertex(first.x, first.y);
+        for (let i = 1; i < path.length; i++) {
+          let prev = elements[path[i - 1]];
+          let curr = elements[path[i]];
+          let mx = (prev.x + curr.x) / 2;
+          let my = (prev.y + curr.y) / 2;
+          let d = dist(prev.x, prev.y, curr.x, curr.y);
+          let angle = noise(mx / flowScale, my / flowScale) * TWO_PI * 4;
+          let cx = mx + cos(angle) * d * 0.4;
+          let cy = my + sin(angle) * d * 0.4;
+          quadraticVertex(cx, cy, curr.x, curr.y);
+        }
+        endShape();
+      } else if (mode === 'hilbert') {
+        let sorted = elements.slice().sort((a, b) => hilbertD(a.x, a.y) - hilbertD(b.x, b.y));
+        beginShape();
+        curveVertex(sorted[0].x, sorted[0].y);
+        for (let elem of sorted) curveVertex(elem.x, elem.y);
+        curveVertex(sorted[sorted.length - 1].x, sorted[sorted.length - 1].y);
+        endShape();
+      } else if (mode === 'contour') {
+        let maxR = Math.max(...elements.map(e => e.radius));
+        let numBands = Math.max(5, Math.floor(1200 / elementSize));
+        let bandWidth = maxR / numBands;
+        let bands = Array.from({ length: numBands }, () => []);
+        for (let elem of elements) {
+          let b = Math.min(numBands - 1, Math.floor(elem.radius / bandWidth));
+          bands[b].push(elem);
+        }
+        for (let band of bands) {
+          if (band.length < 4) continue;
+          band.sort((a, b) => Math.atan2(a.y - height / 2, a.x - width / 2) - Math.atan2(b.y - height / 2, b.x - width / 2));
+          beginShape();
+          curveVertex(band[band.length - 2].x, band[band.length - 2].y);
+          curveVertex(band[band.length - 1].x, band[band.length - 1].y);
+          for (let p of band) curveVertex(p.x, p.y);
+          curveVertex(band[0].x, band[0].y);
+          curveVertex(band[1].x, band[1].y);
+          endShape();
+        }
+      } else if (mode === 'hachures') {
+        let maxR = Math.max(...elements.map(e => e.radius));
+        for (let elem of elements) {
+          let hLen = elementSize * (1 - elem.radius / maxR);
+          if (hLen < 1) continue;
+          let radialAngle = Math.atan2(elem.y - height / 2, elem.x - width / 2);
+          line(elem.x, elem.y,
+               elem.x + cos(radialAngle) * hLen,
+               elem.y + sin(radialAngle) * hLen);
+        }
+      }
+    }
+
+    function handleUpdate() {
+      console.log('Updating...');
+      generateElements();
+      drawPattern();
+    }
+        
+    function hilbertD(px, py) {
+      let n = 1024;
+      let x = Math.floor(px / width * n);
+      let y = Math.floor(py / height * n);
+      let d = 0;
+      for (let s = Math.floor(n / 2); s > 0; s = Math.floor(s / 2)) {
+        let rx = (x & s) > 0 ? 1 : 0;
+        let ry = (y & s) > 0 ? 1 : 0;
+        d += s * s * ((3 * rx) ^ ry);
+        if (ry === 0) {
+          if (rx === 1) { x = s - 1 - x; y = s - 1 - y; }
+          let t = x; x = y; y = t;
+        }
+      }
+      return d;
+    }
+
+    function svgNoise(nx, ny) {
+      let n = Math.sin(nx * 127.1 + ny * 311.7) + Math.sin(nx * 269.5 + ny * 183.3);
+      return (n * 0.25 + 0.5);
+    }
+
+    function handleExportSVG() {
+      console.log('Exporting SVG...');
+      
+      let mode = document.getElementById('renderMode').value;
+      let elementSize = parseInt(document.getElementById('elementSize').value);
+      let lineWeight = parseFloat(document.getElementById('lineWeight').value);
+      let triangleSpread = parseInt(document.getElementById('triangleSpread').value);
+      let triangleVariation = parseFloat(document.getElementById('triangleVariation').value) / 100;
+      let networkConnections = parseInt(document.getElementById('networkConnections').value);
+      let tspMethod = document.getElementById('tspMethod').value;
+      let dotSizeMultiplier = parseFloat(document.getElementById('dotSizeMultiplier').value);
+      let bgColor = document.getElementById('bgColor').value;
+      let drawColor = (bgColor === '#000000' || bgColor === '#2C3E50') ? '#FFFFFF' : 
+                      (bgColor === '#FFFFFF') ? '#000000' : '#FFFFFF';
+      
+      let svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1875" height="1875" viewBox="0 0 1875 1875">
+  <rect width="1875" height="1875" fill="${bgColor}"/>
+  <g stroke="${drawColor}" fill="none" stroke-width="${lineWeight}">
+`;
+      
+      if (mode === 'delaunay') {
+        let triangles = computeDelaunayTriangles();
+        for (let tri of triangles) {
+          let p1 = elements[tri[0]];
+          let p2 = elements[tri[1]];
+          let p3 = elements[tri[2]];
+          svg += `    <polyline points="${p1.x.toFixed(2)},${p1.y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)} ${p3.x.toFixed(2)},${p3.y.toFixed(2)} ${p1.x.toFixed(2)},${p1.y.toFixed(2)}"/>\n`;
+        }
+      } else if (mode === 'tsp') {
+        let path = computeTSPPath(tspMethod);
+        svg += `    <polyline points="`;
+        for (let idx of path) {
+          let elem = elements[idx];
+          svg += `${elem.x.toFixed(2)},${elem.y.toFixed(2)} `;
+        }
+        svg += `"/>\n`;
+      } else if (mode === 'lines') {
+        for (let elem of elements) {
+          let lineLength = elementSize * (1 - elem.index / elements.length);
+          let x1 = elem.x;
+          let y1 = elem.y;
+          let x2 = x1 + lineLength * Math.cos(elem.angle);
+          let y2 = y1 + lineLength * Math.sin(elem.angle);
+          svg += `    <line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}"/>\n`;
+        }
+      } else if (mode === 'voronoi') {
+        let drawnPairs = new Set();
+        for (let i = 0; i < elements.length; i++) {
+          let elem = elements[i];
+          let neighbors = findNearestNeighbors(elem, 6);
+          for (let neighbor of neighbors) {
+            if (neighbor.dist === Infinity) continue;
+            let pairKey = i < neighbor.idx ? `${i}-${neighbor.idx}` : `${neighbor.idx}-${i}`;
+            if (drawnPairs.has(pairKey)) continue;
+            drawnPairs.add(pairKey);
+            let other = elements[neighbor.idx];
+            let midX = (elem.x + other.x) / 2;
+            let midY = (elem.y + other.y) / 2;
+            let dx = other.x - elem.x;
+            let dy = other.y - elem.y;
+            let perpAngle = Math.atan2(dy, dx) + Math.PI / 2;
+            let segmentLength = neighbor.dist * 0.3;
+            let x1 = midX + segmentLength * Math.cos(perpAngle);
+            let y1 = midY + segmentLength * Math.sin(perpAngle);
+            let x2 = midX - segmentLength * Math.cos(perpAngle);
+            let y2 = midY - segmentLength * Math.sin(perpAngle);
+            svg += `    <line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}"/>\n`;
+          }
+        }
+      } else if (mode === 'network') {
+        let drawnConnections = new Set();
+        for (let i = 0; i < elements.length; i++) {
+          let elem = elements[i];
+          let neighbors = findNearestNeighbors(elem, networkConnections);
+          for (let neighbor of neighbors) {
+            if (neighbor.dist === Infinity) continue;
+            let pairKey = i < neighbor.idx ? `${i}-${neighbor.idx}` : `${neighbor.idx}-${i}`;
+            if (drawnConnections.has(pairKey)) continue;
+            drawnConnections.add(pairKey);
+            let other = elements[neighbor.idx];
+            svg += `    <line x1="${elem.x.toFixed(2)}" y1="${elem.y.toFixed(2)}" x2="${other.x.toFixed(2)}" y2="${other.y.toFixed(2)}"/>\n`;
+          }
+        }
+      } else if (mode === 'triangles') {
+        let centerX = 1875 / 2;
+        let centerY = 1875 / 2;
+        let maxRadius = 1875 / 2;
+        let spreadRad = triangleSpread * Math.PI / 180;
+        for (let elem of elements) {
+          let dx = elem.x - centerX;
+          let dy = elem.y - centerY;
+          let distFromCenter = Math.sqrt(dx * dx + dy * dy);
+          let edgeProximity = distFromCenter / maxRadius;
+          let edgeFactor = 1 - Math.pow(edgeProximity, 2);
+          edgeFactor = Math.max(0.3, edgeFactor);
+          let effectiveVariation = triangleVariation * edgeFactor;
+          let distToEdgeX = Math.min(elem.x, 1875 - elem.x);
+          let distToEdgeY = Math.min(elem.y, 1875 - elem.y);
+          let distToEdge = Math.min(distToEdgeX, distToEdgeY);
+          let maxSafeSize = distToEdge * 0.8;
+          let minSize = 0.3 + (effectiveVariation * 0.2);
+          let maxSize = 1.5 + (effectiveVariation * 1.0);
+          let sizeVariation = minSize + Math.random() * (maxSize - minSize);
+          let baseSize = elementSize * (2.0 - elem.index / elements.length) * sizeVariation;
+          baseSize = Math.min(baseSize, maxSafeSize);
+          let x1 = elem.x;
+          let y1 = elem.y;
+          let spreadMultiplier = 1 + ((Math.random() * 2 - 1) * 0.8 + Math.random() * 2.0) * effectiveVariation;
+          spreadMultiplier = Math.max(0.2, spreadMultiplier);
+          let spreadVariation = spreadRad * spreadMultiplier;
+          let tipAngle = elem.angle + Math.PI;
+          let leftSpreadMult = 1 + ((Math.random() * 2 - 1) * 0.5 * effectiveVariation);
+          let rightSpreadMult = 1 + ((Math.random() * 2 - 1) * 0.5 * effectiveVariation);
+          let sideAngle1 = elem.angle + (spreadVariation / 2) * leftSpreadMult;
+          let sideAngle2 = elem.angle - (spreadVariation / 2) * rightSpreadMult;
+          let tipMultiplier = 0.2 + (Math.random() * 1.8 * effectiveVariation);
+          let tipDist = baseSize * tipMultiplier;
+          let tipAngleOffset = ((Math.random() * 2 - 1) * effectiveVariation * 0.3);
+          let xTip = x1 + tipDist * Math.cos(tipAngle + tipAngleOffset);
+          let yTip = y1 + tipDist * Math.sin(tipAngle + tipAngleOffset);
+          let baseDist1 = baseSize * (0.5 + Math.random() * 1.5 * effectiveVariation);
+          let baseDist2 = baseSize * (0.5 + Math.random() * 1.5 * effectiveVariation);
+          let xBase1 = x1 + baseDist1 * Math.cos(sideAngle1);
+          let yBase1 = y1 + baseDist1 * Math.sin(sideAngle1);
+          let xBase2 = x1 + baseDist2 * Math.cos(sideAngle2);
+          let yBase2 = y1 + baseDist2 * Math.sin(sideAngle2);
+          xTip = Math.max(0, Math.min(1875, xTip));
+          yTip = Math.max(0, Math.min(1875, yTip));
+          xBase1 = Math.max(0, Math.min(1875, xBase1));
+          yBase1 = Math.max(0, Math.min(1875, yBase1));
+          xBase2 = Math.max(0, Math.min(1875, xBase2));
+          yBase2 = Math.max(0, Math.min(1875, yBase2));
+          svg += `    <polyline points="${xBase1.toFixed(2)},${yBase1.toFixed(2)} ${xTip.toFixed(2)},${yTip.toFixed(2)} ${xBase2.toFixed(2)},${yBase2.toFixed(2)} ${xBase1.toFixed(2)},${yBase1.toFixed(2)}"/>\n`;
+          let numInternalLines = effectiveVariation > 0.5 ? Math.floor(Math.random() * 3) + 1 : 2;
+          for (let j = 1; j <= numInternalLines; j++) {
+            let t = j / (numInternalLines + 1);
+            let xMid1 = xTip + (xBase1 - xTip) * t;
+            let yMid1 = yTip + (yBase1 - yTip) * t;
+            let xMid2 = xTip + (xBase2 - xTip) * t;
+            let yMid2 = yTip + (yBase2 - yTip) * t;
+            svg += `    <line x1="${xMid1.toFixed(2)}" y1="${yMid1.toFixed(2)}" x2="${xMid2.toFixed(2)}" y2="${yMid2.toFixed(2)}"/>\n`;
+          }
+          svg += `    <line x1="${xTip.toFixed(2)}" y1="${yTip.toFixed(2)}" x2="${xBase1.toFixed(2)}" y2="${yBase1.toFixed(2)}"/>\n`;
+          svg += `    <line x1="${xTip.toFixed(2)}" y1="${yTip.toFixed(2)}" x2="${xBase2.toFixed(2)}" y2="${yBase2.toFixed(2)}"/>\n`;
+          svg += `    <line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${xTip.toFixed(2)}" y2="${yTip.toFixed(2)}"/>\n`;
+        }
+      } else if (mode === 'dots') {
+        svg = svg.replace('fill="none"', `fill="${drawColor}"`);
+        for (let elem of elements) {
+          let dotSize = (map(elem.index, 0, elements.length, 3, 1) * dotSizeMultiplier) / 2;
+          svg += `    <circle cx="${elem.x.toFixed(2)}" cy="${elem.y.toFixed(2)}" r="${dotSize.toFixed(2)}"/>\n`;
+        }
+      } else if (mode === 'fibarms') {
+        let step = parseInt(document.getElementById('fibStep').value);
+        for (let i = 0; i + step < elements.length; i++) {
+          let a = elements[i];
+          let b = elements[i + step];
+          svg += `    <line x1="${a.x.toFixed(2)}" y1="${a.y.toFixed(2)}" x2="${b.x.toFixed(2)}" y2="${b.y.toFixed(2)}"/>\n`;
+        }
+      } else if (mode === 'flow') {
+        let flowSteps = parseInt(document.getElementById('flowSteps').value);
+        let flowScale = parseFloat(document.getElementById('flowScale').value);
+        let stepSize = parseFloat(document.getElementById('spacing').value) * 2;
+        for (let elem of elements) {
+          let pts = `${elem.x.toFixed(2)},${elem.y.toFixed(2)}`;
+          let x = elem.x;
+          let y = elem.y;
+          for (let s = 0; s < flowSteps; s++) {
+            let angle = svgNoise(x / flowScale, y / flowScale) * Math.PI * 4;
+            x += Math.cos(angle) * stepSize;
+            y += Math.sin(angle) * stepSize;
+            pts += ` ${x.toFixed(2)},${y.toFixed(2)}`;
+          }
+          svg += `    <polyline points="${pts}"/>\n`;
+        }
+      } else if (mode === 'curvedtsp') {
+        let flowScale = parseFloat(document.getElementById('flowScale').value);
+        let path = computeTSPPath(tspMethod);
+        let first = elements[path[0]];
+        let d = `M ${first.x.toFixed(2)},${first.y.toFixed(2)}`;
+        for (let i = 1; i < path.length; i++) {
+          let prev = elements[path[i - 1]];
+          let curr = elements[path[i]];
+          let mx = (prev.x + curr.x) / 2;
+          let my = (prev.y + curr.y) / 2;
+          let segLen = Math.sqrt((curr.x - prev.x) ** 2 + (curr.y - prev.y) ** 2);
+          let angle = svgNoise(mx / flowScale, my / flowScale) * Math.PI * 4;
+          let cx = mx + Math.cos(angle) * segLen * 0.4;
+          let cy = my + Math.sin(angle) * segLen * 0.4;
+          d += ` Q ${cx.toFixed(2)},${cy.toFixed(2)} ${curr.x.toFixed(2)},${curr.y.toFixed(2)}`;
+        }
+        svg += `    <path d="${d}"/>\n`;
+      } else if (mode === 'hilbert') {
+        let sorted = elements.slice().sort((a, b) => hilbertD(a.x, a.y) - hilbertD(b.x, b.y));
+        let d = `M ${sorted[0].x.toFixed(2)},${sorted[0].y.toFixed(2)}`;
+        for (let i = 0; i < sorted.length - 1; i++) {
+          let p0 = sorted[Math.max(0, i - 1)];
+          let p1 = sorted[i];
+          let p2 = sorted[i + 1];
+          let p3 = sorted[Math.min(sorted.length - 1, i + 2)];
+          let cp1x = p1.x + (p2.x - p0.x) / 6;
+          let cp1y = p1.y + (p2.y - p0.y) / 6;
+          let cp2x = p2.x - (p3.x - p1.x) / 6;
+          let cp2y = p2.y - (p3.y - p1.y) / 6;
+          d += ` C ${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)}`;
+        }
+        svg += `    <path d="${d}"/>\n`;
+      } else if (mode === 'contour') {
+        let maxR = Math.max(...elements.map(e => e.radius));
+        let numBands = Math.max(5, Math.floor(1200 / elementSize));
+        let bandWidth = maxR / numBands;
+        let bands = Array.from({ length: numBands }, () => []);
+        for (let elem of elements) {
+          let b = Math.min(numBands - 1, Math.floor(elem.radius / bandWidth));
+          bands[b].push(elem);
+        }
+        for (let band of bands) {
+          if (band.length < 4) continue;
+          band.sort((a, b) => Math.atan2(a.y - 937.5, a.x - 937.5) - Math.atan2(b.y - 937.5, b.x - 937.5));
+          let n = band.length;
+          let d = `M ${band[0].x.toFixed(2)},${band[0].y.toFixed(2)}`;
+          for (let i = 0; i < n; i++) {
+            let p0 = band[(i - 1 + n) % n];
+            let p1 = band[i];
+            let p2 = band[(i + 1) % n];
+            let p3 = band[(i + 2) % n];
+            let cp1x = p1.x + (p2.x - p0.x) / 6;
+            let cp1y = p1.y + (p2.y - p0.y) / 6;
+            let cp2x = p2.x - (p3.x - p1.x) / 6;
+            let cp2y = p2.y - (p3.y - p1.y) / 6;
+            d += ` C ${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)}`;
+          }
+          svg += `    <path d="${d} Z"/>\n`;
+        }
+      } else if (mode === 'hachures') {
+        let maxR = Math.max(...elements.map(e => e.radius));
+        for (let elem of elements) {
+          let hLen = elementSize * (1 - elem.radius / maxR);
+          if (hLen < 1) continue;
+          let radialAngle = Math.atan2(elem.y - 937.5, elem.x - 937.5);
+          let x2 = elem.x + Math.cos(radialAngle) * hLen;
+          let y2 = elem.y + Math.sin(radialAngle) * hLen;
+          svg += `    <line x1="${elem.x.toFixed(2)}" y1="${elem.y.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}"/>\n`;
+        }
+      }
+
+      svg += `  </g>
+</svg>`;
+      
+      let blob = new Blob([svg], { type: 'image/svg+xml' });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a');
+      a.href = url;
+      a.download = `fibonacci_spiral_${mode}_${Date.now()}.svg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    
+    function handleExportPNG() {
+      console.log('Exporting PNG...');
+      saveCanvas(`fibonacci_spiral_${Date.now()}`, 'png');
+    }
+  </script>
+</body>
+</html>
